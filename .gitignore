@@ -1,0 +1,8 @@
+/bin
+/worker
+/uploads3
+/cmd/uploads3/uploads3
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml
