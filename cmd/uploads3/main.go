@@ -42,7 +42,6 @@ func main() {
 		Bucket: aws.String(bucket),
 		Key:    aws.String(filepath.Base(filename)),
 		Body:   file,
-		ACL:    aws.String("public-read"),
 	})
 	if err != nil {
 		fmt.Println("error", err)
