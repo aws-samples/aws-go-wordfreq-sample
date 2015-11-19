@@ -9,8 +9,10 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/aws/aws-sdk-go/service/sqs"
+	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 
 	"github.com/awslabs/aws-go-wordfreq-sample"
 )
@@ -36,10 +38,14 @@ func main() {
 	}
 	defer file.Close()
 
-	fmt.Println("Uploading file to s3...")
+	// Create a session which contains the default configurations for the SDK.
+	// Use the session to create the service clients to make API calls to AWS.
+	sess := session.New()
 
-	// Similar to initializing
-	svc := s3manager.NewUploader(nil)
+	// Create S3 Uploader manager to concurrently upload the file
+	svc := s3manager.NewUploader(sess)
+
+	fmt.Println("Uploading file to S3...")
 	result, err := svc.Upload(&s3manager.UploadInput{
 		Bucket: aws.String(bucket),
 		Key:    aws.String(filepath.Base(filename)),
@@ -50,11 +56,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Printf("Succesfully uploaded %s to %s\n", filename, result.Location)
+	fmt.Printf("Successfully uploaded %s to %s\n", filename, result.Location)
 
 	if queueURL := os.Getenv("WORKER_RESULT_QUEUE_URL"); queueURL != "" {
 		fmt.Println("Waiting for results...")
-		waitForResult(bucket, filepath.Base(filename), queueURL)
+		waitForResult(sqs.New(sess), bucket, filepath.Base(filename), queueURL)
 	}
 }
 
@@ -64,8 +70,7 @@ func main() {
 // will also be deleted from the queue, and its status written to the console.
 // If the job result doesn't match the file uploaded by this client, the message
 // will be ignored, so another client could received it.
-func waitForResult(bucket, filename, resultQueueURL string) {
-	svc := sqs.New(nil)
+func waitForResult(svc sqsiface.SQSAPI, bucket, filename, resultQueueURL string) {
 	for {
 		resp, err := svc.ReceiveMessage(&sqs.ReceiveMessageInput{
 			QueueUrl:          aws.String(resultQueueURL),
@@ -73,7 +78,7 @@ func waitForResult(bucket, filename, resultQueueURL string) {
 			WaitTimeSeconds:   aws.Int64(20),
 		})
 		if err != nil {
-			log.Println("Failed to receive mesasge", err)
+			log.Println("Failed to receive message", err)
 			time.Sleep(30 * time.Second)
 			continue
 		}
@@ -127,7 +132,7 @@ func printDuration(dur time.Duration) string {
 		nano = (nano / 1e9) * 1e9
 	} else if dur > time.Second {
 		nano = (nano / 1e6) * 1e6
-	} else if dur > time.Millisecond  {
+	} else if dur > time.Millisecond {
 		nano = (nano / 1e3) * 1e3
 	}
 	return time.Duration(nano).String()

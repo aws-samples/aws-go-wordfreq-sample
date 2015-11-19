@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"os"
 	"path/filepath"
 
@@ -24,7 +25,7 @@ func main() {
 	// Create a new instance of the DynamoDB service client. To simplify config
 	// and allow the app to work in multiple regions environment variables will
 	// provide the AWS_REGION, and credentials.
-	svc := dynamodb.New(nil)
+	svc := dynamodb.New(session.New())
 
 	// Use CreateTable API Operation to create a table on DynamoDB in the
 	// AWS_REGION's region. '_' is used for the result variable since it is

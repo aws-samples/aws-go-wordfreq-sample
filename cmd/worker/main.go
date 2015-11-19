@@ -52,18 +52,18 @@ func main() {
 		os.Exit(1)
 	}
 
-	sqsSvc := sqs.New(nil)
+	sqsSvc := sqs.New(cfg.Session)
 	queue := NewJobMessageQueue(cfg.WorkerQueueURL, cfg.MessageVisibilityTimeout, 5, sqsSvc)
 	go queue.Listen(doneCh)
 
 	// Job Workers
 	resultsCh := make(chan *wordfreq.JobResult, 10)
-	workers := NewWorkerPool(cfg.NumWorkers, resultsCh, queue, s3.New(nil))
+	workers := NewWorkerPool(cfg.NumWorkers, resultsCh, queue, s3.New(cfg.Session))
 
 	// Notifier to notify a Amazon SNS Topic
 	notify := NewResultNotifier(sqsSvc, cfg.ResultQueueURL)
 	// Recorder to write results to Amazon DynamoDB
-	recorder := NewResultRecorder(cfg.ResultTableName, dynamodb.New(nil))
+	recorder := NewResultRecorder(cfg.ResultTableName, dynamodb.New(cfg.Session))
 
 	// Job Progress Collector
 	collector := NewResultCollector(notify, recorder, queue)

@@ -1,6 +1,7 @@
 /bin
 /worker
 /uploads3
+/createTable
 /cmd/uploads3/uploads3
 # Elastic Beanstalk Files
 .elasticbeanstalk/*

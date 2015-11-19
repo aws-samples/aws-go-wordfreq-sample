@@ -3,28 +3,31 @@ package main
 import (
 	"fmt"
 	"os"
-	"strconv"
 	"runtime"
+	"strconv"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/defaults"
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
+	"github.com/aws/aws-sdk-go/aws/session"
 )
 
 const defaultMessageVisibilityTimeout = 60
-var defaultWorkerCount = runtime.NumCPU();
+
+var defaultWorkerCount = runtime.NumCPU()
 
 // A Config provides a collection of configuration values the service will use
 // to setup its components.
 type Config struct {
+	Session *session.Session
+
 	// SQS queue URL job messages will be available at
-	WorkerQueueURL           string
+	WorkerQueueURL string
 	// SQS queue URL job results will be written to
-	ResultQueueURL           string
+	ResultQueueURL string
 	// DynamoDB tablename results will be recorded to
-	ResultTableName          string
+	ResultTableName string
 	// Number of workers in the worker pool
-	NumWorkers               int
+	NumWorkers int
 	// The amount of time in seconds a read job message from the SQS will be
 	// hidden from other readers of the queue.
 	MessageVisibilityTimeout int64
@@ -37,6 +40,7 @@ func getConfig() (Config, error) {
 		WorkerQueueURL:  os.Getenv("WORKER_QUEUE_URL"),
 		ResultQueueURL:  os.Getenv("WORKER_RESULT_QUEUE_URL"),
 		ResultTableName: os.Getenv("WORKER_RESULT_TABLENAME"),
+		Session:         session.New(),
 	}
 
 	if c.WorkerQueueURL == "" {
@@ -49,12 +53,12 @@ func getConfig() (Config, error) {
 		return c, fmt.Errorf("missing WORKER_RESULT_TABLENAME")
 	}
 
-	if os.Getenv("AWS_REGION") == "" {
-		region, err := ec2metadata.New(nil).Region()
+	if aws.StringValue(c.Session.Config.Region) == "" {
+		region, err := ec2metadata.New(c.Session).Region()
 		if err != nil {
 			return c, fmt.Errorf("region not specified, unable to retrieve from EC2 instance %v", err)
 		}
-		defaults.DefaultConfig.Region = aws.String(region)
+		c.Session.Config.Region = aws.String(region)
 	}
 
 	if timeoutStr := os.Getenv("WORKER_MESSAGE_VISIBILITY"); timeoutStr != "" {
