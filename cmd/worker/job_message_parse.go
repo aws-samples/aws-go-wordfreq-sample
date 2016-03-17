@@ -20,6 +20,10 @@ func parseJobMessage(jobCh chan<- *wordfreq.Job, msg wordfreq.JobMessage, timeou
 		return fmt.Errorf("parse Amazon S3 Event message %v", err)
 	}
 
+	if len(s3msg.Records) == 0 {
+		return fmt.Errorf("job does not have any records")
+	}
+
 	for _, record := range s3msg.Records {
 		jobCh <- &wordfreq.Job{
 			StartedAt:         time.Now(),
@@ -38,6 +42,7 @@ func parseJobMessage(jobCh chan<- *wordfreq.Job, msg wordfreq.JobMessage, timeou
 // is an abbreviated form of the message since not all fields are used by this
 // service.
 type s3EventMsg struct {
+	Event   string
 	Records []struct {
 		Region    string `json:"awsRegion"`
 		EventName string

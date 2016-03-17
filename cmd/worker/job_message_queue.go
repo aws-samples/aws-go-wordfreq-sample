@@ -62,7 +62,7 @@ func (m *JobMessageQueue) Listen(doneCh <-chan struct{}) {
 			// to bump up the number of messages that will be read from SQS at once
 			// by default only one message is read.
 			for _, msg := range msgs {
-				parseJobMessage(m.jobCh,
+				parseErr := parseJobMessage(m.jobCh,
 					wordfreq.JobMessage{
 						ID:            *msg.MessageId,
 						ReceiptHandle: *msg.ReceiptHandle,
@@ -70,6 +70,10 @@ func (m *JobMessageQueue) Listen(doneCh <-chan struct{}) {
 					},
 					m.queueVisibility,
 				)
+				if parseErr != nil {
+					fmt.Println("Failed to parse", *msg.MessageId, "job message,", err)
+					m.DeleteMessage(*msg.ReceiptHandle)
+				}
 			}
 		}
 	}
