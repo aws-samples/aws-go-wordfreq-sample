@@ -71,7 +71,7 @@ func (m *JobMessageQueue) Listen(doneCh <-chan struct{}) {
 					m.queueVisibility,
 				)
 				if parseErr != nil {
-					fmt.Println("Failed to parse", *msg.MessageId, "job message,", err)
+					fmt.Println("Failed to parse", *msg.MessageId, "job message,", parseErr)
 					m.DeleteMessage(*msg.ReceiptHandle)
 				}
 			}
