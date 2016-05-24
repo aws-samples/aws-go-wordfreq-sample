@@ -29,7 +29,7 @@ Requires the following environment variables to be set.
 Optionally the follow environment variables can be provided.
 
 * AWS_REGION - The AWS region the worker will use for signing and making all requests to. This parameter is only optional if the service is running within an EC2 instance. If not running in an EC2 instance AWS_REGION is required.
-* WORKER_MESSAGE_VISIBILITY - The ammount of time messges will be hidden in the SQS job message queue from other services when a service reads that message. Will also be used to extend the visibility timeout for long running jobs. Defaults to 60s.
+* WORKER_MESSAGE_VISIBILITY - The amount of time messages will be hidden in the SQS job message queue from other services when a service reads that message. Will also be used to extend the visibility timeout for long running jobs. Defaults to 60s.
 * WORKER_COUNT - The number of workers in the worker pool. Defaults to the number of virtual CPUs in the system.
 
 
