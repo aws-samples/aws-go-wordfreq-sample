@@ -70,34 +70,32 @@ func (w *Worker) run() {
 	defer fmt.Printf("Worker %d quitting.\n", w.id)
 
 	for {
-		select {
-		case job, ok := <-w.queue.GetJobs():
-			if !ok {
-				return
-			}
-			fmt.Printf("Worker %d received job %s\n", w.id, job.OrigMessage.ID)
-			result := &wordfreq.JobResult{
-				Job: job,
-			}
-
-			// Stream the file from S3, counting the words and return the words
-			// and error if one occurred. If an error occurred the words will be
-			// ignored, and a failed result status is set. Otherwise the success
-			// status is set along with the words.
-			words, err := w.processJob(job)
-			if err != nil {
-				result.Status = wordfreq.JobCompleteFailure
-				result.StatusMessage = err.Error()
-				log.Println("Failed to process job", job.OrigMessage.ID, err)
-			} else {
-				result.Status = wordfreq.JobCompleteSuccess
-				result.Words = words
-			}
-			// The duration is collected so that the results can report the
-			// the amount of time a job took to process.
-			result.Duration = time.Now().Sub(job.StartedAt)
-			w.resultCh <- result
+		job, ok := <-w.queue.GetJobs():
+		if !ok {
+			return
 		}
+		fmt.Printf("Worker %d received job %s\n", w.id, job.OrigMessage.ID)
+		result := &wordfreq.JobResult{
+			Job: job,
+		}
+
+		// Stream the file from S3, counting the words and return the words
+		// and error if one occurred. If an error occurred the words will be
+		// ignored, and a failed result status is set. Otherwise the success
+		// status is set along with the words.
+		words, err := w.processJob(job)
+		if err != nil {
+			result.Status = wordfreq.JobCompleteFailure
+			result.StatusMessage = err.Error()
+			log.Println("Failed to process job", job.OrigMessage.ID, err)
+		} else {
+			result.Status = wordfreq.JobCompleteSuccess
+			result.Words = words
+		}
+		// The duration is collected so that the results can report the
+		// the amount of time a job took to process.
+		result.Duration = time.Now().Sub(job.StartedAt)
+		w.resultCh <- result
 	}
 }
 
