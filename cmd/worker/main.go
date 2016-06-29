@@ -60,7 +60,7 @@ func main() {
 	resultsCh := make(chan *wordfreq.JobResult, 10)
 	workers := NewWorkerPool(cfg.NumWorkers, resultsCh, queue, s3.New(cfg.Session))
 
-	// Notifier to notify a Amazon SNS Topic
+	// Notifier to send a message to an Amazon SQS Queue
 	notify := NewResultNotifier(sqsSvc, cfg.ResultQueueURL)
 	// Recorder to write results to Amazon DynamoDB
 	recorder := NewResultRecorder(cfg.ResultTableName, dynamodb.New(cfg.Session))
